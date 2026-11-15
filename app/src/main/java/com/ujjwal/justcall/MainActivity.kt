@@ -60,7 +60,7 @@ class MainActivity : Activity() {
             setHintTextColor(Color.GRAY)
             setTextColor(Color.WHITE)
             textSize = 20f
-            singleLine = true
+            setSingleLine(true)
             setPadding(18, 14, 18, 14)
             setBackgroundColor(panel)
             inputType = android.text.InputType.TYPE_CLASS_PHONE
