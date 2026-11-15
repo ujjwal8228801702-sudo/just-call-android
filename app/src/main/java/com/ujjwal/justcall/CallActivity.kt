@@ -12,7 +12,8 @@ import android.telecom.Call
 class CallActivity : Activity() {
     private val gold = Color.rgb(201,169,110)
     private val bg = Color.rgb(9,11,17)
-    private var callback: Call.Callback? = null
+    private var muted = false
+    private var speaker = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,31 +48,29 @@ class CallActivity : Activity() {
                 Call.STATE_DIALING -> "Calling…"
                 Call.STATE_ACTIVE -> "Connected"
                 Call.STATE_HOLDING -> "On hold"
-                else -> "Call"
+                else -> "Call ended"
             }
             textSize = 16f
             setTextColor(Color.LTGRAY)
         })
-        val mute = Button(this).apply {
-            text = "Mute / Unmute"
-            setOnClickListener {
-                call?.let { it.setMuted(!it.details.hasProperty(Call.Details.PROPERTY_CONFERENCE)) }
-            }
-        }
-        root.addView(mute)
-        val speaker = Button(this).apply {
-            text = "Speaker"
-            setOnClickListener {
-                val audio = getSystemService(android.telecom.TelecomManager::class.java)
-                try { audio?.let { it.setAudioRoute(android.telecom.CallAudioState.ROUTE_SPEAKER) } } catch (_: Exception) {}
-            }
-        }
-        root.addView(speaker)
+        root.addView(Button(this).apply {
+            text = if (muted) "Unmute" else "Mute"
+            setOnClickListener { muted = !muted; CallAudioController.setMuted(muted); render() }
+        })
+        root.addView(Button(this).apply {
+            text = if (speaker) "Earpiece" else "Speaker"
+            setOnClickListener { speaker = !speaker; CallAudioController.setSpeaker(speaker); render() }
+        })
         if (call?.state == Call.STATE_RINGING) {
             root.addView(Button(this).apply { text = "Answer"; setOnClickListener { call.answer(android.telecom.VideoProfile.STATE_AUDIO_ONLY); render() } })
             root.addView(Button(this).apply { text = "Reject"; setOnClickListener { call.disconnect(); finish() } })
         } else {
-            root.addView(Button(this).apply { text = "End Call"; setTextColor(Color.WHITE); setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.RED)); setOnClickListener { call?.disconnect(); finish() } })
+            root.addView(Button(this).apply {
+                text = "End Call"
+                setTextColor(Color.WHITE)
+                setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.RED))
+                setOnClickListener { call?.disconnect(); finish() }
+            })
         }
         setContentView(root)
     }
